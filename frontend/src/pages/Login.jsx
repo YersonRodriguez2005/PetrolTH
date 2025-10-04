@@ -1,229 +1,137 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { FiLoader, FiUser, FiLock } from "react-icons/fi";
-import { motion } from "framer-motion";
-
-const PRIMARY_RED = "#C70000"; // Rojo corporativo
-const PRIMARY_BLUE = "#2B3D8C"; // Azul corporativo
-
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [credentials, setCredentials] = useState({ usuario: "", password: "" });
-  const [error, setError] = useState("");
+  const [credentials, setCredentials] = useState({
+    usuario: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const mensajes = {
-    camposVacios: "Por favor, ingresa tu usuario y contraseña.",
-    errorConexion: "Error de conexión. Inténtalo más tarde.",
-    errorInesperado: "Ocurrió un error inesperado. Verifica tu conexión.",
-  };
 
   const handleChange = (e) => {
     setCredentials({
       ...credentials,
-      [e.target.name]: e.target.value.trimStart(),
+      [e.target.name]: e.target.value
     });
-    if (error) setError(""); // limpia error al escribir
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
 
-    const { usuario, password } = credentials;
+    console.log('🔐 Intentando login con:', credentials.usuario);
 
-    if (!usuario || !password) {
-      setError(mensajes.camposVacios);
-      setLoading(false);
-      return;
+    const result = await login(credentials);
+    
+    console.log('📝 Resultado del login:', result);
+    
+    if (result.success) {
+      console.log('✅ Login exitoso, redirigiendo...');
+      navigate('/solicitudes');
+    } else {
+      console.error('❌ Error de login:', result.error);
+      setError(result.error);
     }
-
-    try {
-      const result = await login(credentials);
-      if (result.success) {
-        navigate("/solicitudes");
-      } else {
-        setError(result.error || mensajes.errorConexion);
-      }
-    } catch {
-      setError(mensajes.errorInesperado);
-    } finally {
-      setLoading(false);
-    }
+    
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border"
-        style={{ borderColor: PRIMARY_BLUE }}
-        role="main"
-        aria-label="Formulario de inicio de sesión"
-      >
-        <header
-          className="py-12 px-10 text-center relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${PRIMARY_BLUE} 0%, #1A2460 100%)`,
-          }}
-        >
-          {/* Fondo animado sutil */}
-          <div className="absolute inset-0 opacity-15">
-            <div className="w-[200%] h-full bg-[radial-gradient(circle_at_center,white,transparent_70%)] animate-pulse" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#2D4373] to-[#1e2d4f] px-4">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        {/* Logo/Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#2D4373] to-[#C4181E] rounded-full mb-4">
+            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">PetrolFlow</h2>
+          <p className="text-gray-600 mt-2">Sistema de Solicitudes y Órdenes</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Usuario</label>
+            <input
+              type="text"
+              name="usuario"
+              value={credentials.usuario}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D4373] focus:border-transparent transition-all"
+              required
+              autoComplete="username"
+              placeholder="Ingrese su usuario"
+            />
           </div>
 
-          {/* Logo */}
-          <motion.h1
-            className="relative text-5xl md:text-6xl font-extrabold uppercase tracking-[0.35em] leading-none select-none drop-shadow-xl"
-            aria-label="Logo PetrolFlow"
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          >
-            <motion.span
-              style={{ color: PRIMARY_RED }}
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              P
-            </motion.span>
-            <span className="text-white">ETROLFLOW</span>
-          </motion.h1>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+            <input
+              type="password"
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D4373] focus:border-transparent transition-all"
+              required
+              autoComplete="current-password"
+              placeholder="Ingrese su contraseña"
+            />
+          </div>
 
-          {/* Subtítulo */}
-          <motion.p
-            className="text-base md:text-lg text-gray-100 mt-2 font-medium tracking-wide drop-shadow-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 1 }}
-          >
-            Sistema de Gestión Logística
-          </motion.p>
-        </header>
-
-        {/* Form */}
-        <section className="p-10">
-          <h2 className="text-3xl font-semibold text-gray-900 mb-8 text-center select-none">
-            Acceder al Sistema 🔑
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-7" noValidate>
-            {/* Usuario */}
-            <label htmlFor="usuario" className="block relative">
-              <FiUser
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                aria-hidden="true"
-                size={20}
-              />
-              <input
-                id="usuario"
-                name="usuario"
-                type="text"
-                value={credentials.usuario}
-                onChange={handleChange}
-                placeholder="Nombre de usuario"
-                autoComplete="username"
-                disabled={loading}
-                required
-                aria-required="true"
-                aria-invalid={!!error}
-                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400
-                  focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300"
-              />
-            </label>
-
-            {/* Contraseña */}
-            <label htmlFor="password" className="block relative">
-              <FiLock
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                aria-hidden="true"
-                size={20}
-              />
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={credentials.password}
-                onChange={handleChange}
-                placeholder="Contraseña"
-                autoComplete="current-password"
-                disabled={loading}
-                required
-                aria-required="true"
-                aria-invalid={!!error}
-                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400
-                  focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition duration-300"
-              />
-            </label>
-
-            {/* Error */}
-            {error && (
-              <div
-                role="alert"
-                className="flex items-center bg-red-50 border border-red-300 text-red-700 px-5 py-3 rounded-lg text-sm font-medium select-none"
-              >
-                <span className="mr-2" aria-hidden="true">
-                  ⚠️
-                </span>
-                {error}
-              </div>
-            )}
-
-            {/* Botón */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center items-center space-x-3 bg-red-700 hover:bg-red-800 active:bg-red-900
-                text-white font-semibold py-4 rounded-xl shadow-lg transition duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-              aria-busy={loading}
-            >
-              {loading ? (
-                <>
-                  <FiLoader className="animate-spin text-xl" aria-hidden="true" />
-                  <span>Ingresando...</span>
-                </>
-              ) : (
-                <span>Ingresar</span>
-              )}
-            </button>
-          </form>
-
-          {/* Credenciales demo */}
-          <aside
-            className="mt-10 p-5 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-600 text-xs select-none"
-            aria-label="Credenciales de demostración"
-          >
-            <p
-              className="font-semibold mb-3 text-center"
-              style={{ color: PRIMARY_BLUE }}
-            >
-              <span className="mr-1" aria-hidden="true">
-                ℹ️
-              </span>
-              Para demostración:
-            </p>
-            <div className="flex justify-around text-center space-x-6">
-              <div>
-                <p className="font-semibold text-gray-800 mb-1">Usuario Estándar:</p>
-                <p className="font-mono text-xs">usuario1 / Petrol1234*</p>
-              </div>
-              <div className="border-l border-gray-300" aria-hidden="true"></div>
-              <div>
-                <p className="font-semibold text-gray-800 mb-1">Usuario Admin:</p>
-                <p className="font-mono text-xs">admin / PetrolAdmin1234*</p>
+          {error && (
+            <div className="bg-red-50 border-l-4 border-[#C4181E] text-red-900 px-4 py-3 rounded-r">
+              <div className="flex items-start">
+                <span className="text-xl mr-2">⚠️</span>
+                <div>
+                  <p className="font-bold">Error:</p>
+                  <p className="text-sm">{error}</p>
+                </div>
               </div>
             </div>
-          </aside>
+          )}
 
-          {/* Footer */}
-          <footer className="mt-12 pt-6 border-t border-gray-100 text-center text-xs text-gray-400 select-none">
-            © {new Date().getFullYear()} PetrolFlow.
-          </footer>
-        </section>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#C4181E] to-[#a01419] text-white py-3 rounded-lg hover:from-[#a01419] hover:to-[#C4181E] transition-all font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Ingresando...
+              </span>
+            ) : (
+              'Ingresar al Sistema'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-red-50 rounded-lg border border-gray-200">
+          <p className="font-semibold text-gray-800 mb-3 text-center">Credenciales de prueba:</p>
+          <div className="space-y-3">
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500 uppercase font-semibold">Usuario Normal</p>
+              <p className="text-sm"><strong className="text-[#2D4373]">Usuario:</strong> usuario1</p>
+              <p className="text-sm"><strong className="text-[#2D4373]">Contraseña:</strong> Petrol1234*</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500 uppercase font-semibold">Administrador</p>
+              <p className="text-sm"><strong className="text-[#C4181E]">Usuario:</strong> admin</p>
+              <p className="text-sm"><strong className="text-[#C4181E]">Contraseña:</strong> PetrolAdmin1234*</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ const Solicitudes = () => {
       if (isAdmin() && verTodas) {
         response = await getSolicitudes();
       } else {
-        response = await getSolicitudesByUsuario(user?.usuario);
+        response = await getSolicitudesByUsuario(user.usuario);
       }
       
       setSolicitudes(response.data);
@@ -36,7 +36,6 @@ const Solicitudes = () => {
 
   useEffect(() => {
     cargarSolicitudes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verTodas]);
 
   const handleSolicitudCreada = () => {
@@ -117,7 +116,7 @@ const Solicitudes = () => {
                     </td>
                   </tr>
                 ) : (
-                  solicitudes.map((solicitud) => (
+                  solicitudes.map(solicitud => (
                     <SolicitudRow 
                       key={solicitud.id} 
                       solicitud={solicitud}
