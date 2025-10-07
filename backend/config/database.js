@@ -1,6 +1,8 @@
-// database.js
+// config/database.js
 const { Pool } = require('pg');
 require('dotenv').config();
+
+const isRender = process.env.RENDER === 'true' || process.env.DB_SSL === 'true';
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -8,13 +10,13 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
-  ssl: { rejectUnauthorized: false }, // obligatorio para Render
-  connectionTimeoutMillis: 10000,     // evita timeout en render
+  ssl: isRender ? { rejectUnauthorized: false } : false, // 👈 clave aquí
+  connectionTimeoutMillis: 10000,
 });
 
 pool.connect()
   .then(client => {
-    console.log('✅ Conexión establecida con PostgreSQL en Render');
+    console.log('✅ Conexión establecida con PostgreSQL');
     client.release();
   })
   .catch(err => {

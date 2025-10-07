@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "initdb": "node initDB.js"
+    "checkusers": "node scripts/checkUsersRender.js"
   },
   "author": "",
   "license": "ISC",
