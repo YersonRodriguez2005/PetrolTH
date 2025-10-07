@@ -9,12 +9,13 @@ const login = async (req, res) => {
 
     console.log('🔐 Intento de login:', { usuario, passwordLength: password?.length });
 
-    // Buscar usuario en la base de datos
-    const [rows] = await db.query(
-      'SELECT * FROM usuarios WHERE usuario = ?',
+    // Buscar usuario en la base de datos (PostgreSQL usa $1, $2 en lugar de ?)
+    const result = await db.query(
+      'SELECT * FROM usuarios WHERE usuario = $1',
       [usuario]
     );
 
+    const rows = result.rows;
     console.log('📊 Usuarios encontrados:', rows.length);
 
     if (rows.length === 0) {
