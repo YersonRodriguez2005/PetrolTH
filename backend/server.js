@@ -6,7 +6,10 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',       // para desarrollo local
+    'https://petrol-th-7up2.vercel.app'  // ⚠️ reemplaza con tu dominio real de Vercel
+  ],
   credentials: true
 }));
 app.use(express.json());
