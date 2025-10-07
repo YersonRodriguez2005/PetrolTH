@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { agregarNumeroSolicitud, agregarNumeroOrden, cambiarEstado, deleteSolicitud, generarReporte } from '../services/api';
+import { 
+  agregarNumeroSolicitud, 
+  agregarNumeroOrden, 
+  cambiarEstado, 
+  deleteSolicitud, 
+  generarReporte 
+} from '../services/api';
 
 const SolicitudRow = ({ solicitud, onUpdate }) => {
   const { isAdmin, user } = useAuth();
+
   const [editandoSolicitud, setEditandoSolicitud] = useState(false);
   const [editandoOrden, setEditandoOrden] = useState(false);
   const [numeroSolicitud, setNumeroSolicitud] = useState(solicitud.numero_solicitud || '');
@@ -11,7 +18,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
   const [loading, setLoading] = useState(false);
 
   const getEstadoColor = (estado) => {
-    switch(estado) {
+    switch (estado) {
       case 'Pendiente': return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
       case 'Aprobada': return 'bg-green-100 text-green-800 border border-green-300';
       case 'Anulada': return 'bg-red-100 text-red-800 border border-red-300';
@@ -19,6 +26,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
     }
   };
 
+  // --- 🧩 Handlers ---
   const handleAgregarSolicitud = async () => {
     if (!numeroSolicitud.trim()) {
       alert('Ingrese un número de solicitud');
@@ -34,6 +42,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
     } catch (error) {
       console.error('Error completo:', error);
       alert('❌ ' + (error.response?.data?.message || 'Error al actualizar número de solicitud'));
+    } finally {
       setLoading(false);
     }
   };
@@ -53,33 +62,22 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
     } catch (error) {
       console.error('Error completo:', error);
       alert('❌ ' + (error.response?.data?.message || 'Error al actualizar número de orden'));
+    } finally {
       setLoading(false);
     }
   };
 
   const handleCambiarEstado = async (campo, valor) => {
-    console.log('🔄 Cambiando estado:', { campo, valor, solicitudId: solicitud.id });
-    console.log('Usuario actual:', user);
-    console.log('Es admin?:', isAdmin());
-
-    if (!window.confirm(`¿Confirmar cambio de estado a "${valor}"?`)) {
-      return;
-    }
+    if (!window.confirm(`¿Confirmar cambio de estado a "${valor}"?`)) return;
 
     setLoading(true);
     try {
       const payload = { [campo]: valor };
-      console.log('Enviando payload:', payload);
-      
-      const response = await cambiarEstado(solicitud.id, payload);
-      console.log('Respuesta del servidor:', response);
-      
+      await cambiarEstado(solicitud.id, payload);
       alert('✓ Estado actualizado exitosamente');
       onUpdate();
     } catch (error) {
       console.error('❌ Error completo:', error);
-      console.error('Response data:', error.response?.data);
-      console.error('Response status:', error.response?.status);
       alert('❌ ' + (error.response?.data?.message || 'Error al cambiar estado'));
     } finally {
       setLoading(false);
@@ -87,9 +85,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
   };
 
   const handleEliminar = async () => {
-    if (!window.confirm('⚠️ ¿Está seguro de eliminar esta solicitud?\n\nEsta acción no se puede deshacer.')) {
-      return;
-    }
+    if (!window.confirm('⚠️ ¿Está seguro de eliminar esta solicitud?\n\nEsta acción no se puede deshacer.')) return;
 
     setLoading(true);
     try {
@@ -114,7 +110,9 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
   };
 
   const formatFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-CO', {
+    if (!fecha) return '—';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-CO', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -123,18 +121,21 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
     });
   };
 
+  // --- 🧠 Permisos y control lógico ---
   const puedeEditarNumeros = true;
-  const puedeEliminar = isAdmin();
-  const puedeCambiarEstado = isAdmin();
+  const puedeEliminar = isAdmin?.();
+  const puedeCambiarEstado = isAdmin?.();
 
-  console.log('Renderizando fila:', { 
-    id: solicitud.id, 
+  // Debug opcional
+  console.debug('Renderizando fila:', {
+    id: solicitud.id,
     numero_solicitud: solicitud.numero_solicitud,
     puedeCambiarEstado,
-    isAdmin: isAdmin(),
+    isAdmin: isAdmin?.(),
     userRole: user?.rol
   });
 
+  // --- JSX ---
   return (
     <tr className={`hover:bg-gray-50 transition-colors ${loading ? 'opacity-50' : ''}`}>
       <td className="px-4 py-4 text-sm font-semibold text-[#2D4373]">#{solicitud.id}</td>
@@ -144,7 +145,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
           {solicitud.tipo_solicitud}
         </span>
       </td>
-      
+
       {/* Número de Solicitud */}
       <td className="px-4 py-4 text-sm">
         {editandoSolicitud ? (
@@ -157,22 +158,8 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
               placeholder="SOL-XXX"
               autoFocus
             />
-            <button
-              onClick={handleAgregarSolicitud}
-              className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold"
-              disabled={loading}
-            >
-              ✓
-            </button>
-            <button
-              onClick={() => {
-                setEditandoSolicitud(false);
-                setNumeroSolicitud(solicitud.numero_solicitud || '');
-              }}
-              className="px-3 py-2 bg-gray-400 text-white rounded-lg text-xs hover:bg-gray-500"
-            >
-              ✕
-            </button>
+            <button onClick={handleAgregarSolicitud} className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold" disabled={loading}>✓</button>
+            <button onClick={() => { setEditandoSolicitud(false); setNumeroSolicitud(solicitud.numero_solicitud || ''); }} className="px-3 py-2 bg-gray-400 text-white rounded-lg text-xs hover:bg-gray-500">✕</button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -181,15 +168,10 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
                 {solicitud.numero_solicitud}
               </span>
             ) : (
-              <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-lg text-xs italic">
-                Sin número
-              </span>
+              <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-lg text-xs italic">Sin número</span>
             )}
             {puedeEditarNumeros && (
-              <button
-                onClick={() => setEditandoSolicitud(true)}
-                className="text-[#2D4373] hover:text-[#C4181E] transition-colors"
-              >
+              <button onClick={() => setEditandoSolicitud(true)} className="text-[#2D4373] hover:text-[#C4181E] transition-colors">
                 {solicitud.numero_solicitud ? '✏️' : '➕'}
               </button>
             )}
@@ -202,10 +184,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
         {puedeCambiarEstado ? (
           <select
             value={solicitud.estado_solicitud}
-            onChange={(e) => {
-              console.log('Select onChange - Estado Solicitud:', e.target.value);
-              handleCambiarEstado('estado_solicitud', e.target.value);
-            }}
+            onChange={(e) => handleCambiarEstado('estado_solicitud', e.target.value)}
             className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer ${getEstadoColor(solicitud.estado_solicitud)}`}
             disabled={loading}
           >
@@ -215,9 +194,6 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
           </select>
         ) : (
           <span className={`px-3 py-2 rounded-lg text-xs font-bold inline-block ${getEstadoColor(solicitud.estado_solicitud)}`}>
-            {solicitud.estado_solicitud === 'Pendiente' && '⏳ '}
-            {solicitud.estado_solicitud === 'Aprobada' && '✓ '}
-            {solicitud.estado_solicitud === 'Anulada' && '✕ '}
             {solicitud.estado_solicitud}
           </span>
         )}
@@ -235,22 +211,8 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
               placeholder="ORD-XXX"
               autoFocus
             />
-            <button
-              onClick={handleAgregarOrden}
-              className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold"
-              disabled={loading}
-            >
-              ✓
-            </button>
-            <button
-              onClick={() => {
-                setEditandoOrden(false);
-                setNumeroOrden(solicitud.numero_orden || '');
-              }}
-              className="px-3 py-2 bg-gray-400 text-white rounded-lg text-xs hover:bg-gray-500"
-            >
-              ✕
-            </button>
+            <button onClick={handleAgregarOrden} className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold" disabled={loading}>✓</button>
+            <button onClick={() => { setEditandoOrden(false); setNumeroOrden(solicitud.numero_orden || ''); }} className="px-3 py-2 bg-gray-400 text-white rounded-lg text-xs hover:bg-gray-500">✕</button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -259,15 +221,10 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
                 {solicitud.numero_orden}
               </span>
             ) : (
-              <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-lg text-xs italic">
-                Sin número
-              </span>
+              <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-lg text-xs italic">Sin número</span>
             )}
             {puedeEditarNumeros && (
-              <button
-                onClick={() => setEditandoOrden(true)}
-                className="text-[#C4181E] hover:text-[#2D4373] transition-colors"
-              >
+              <button onClick={() => setEditandoOrden(true)} className="text-[#C4181E] hover:text-[#2D4373] transition-colors">
                 {solicitud.numero_orden ? '✏️' : '➕'}
               </button>
             )}
@@ -280,10 +237,7 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
         {puedeCambiarEstado ? (
           <select
             value={solicitud.estado_orden}
-            onChange={(e) => {
-              console.log('Select onChange - Estado Orden:', e.target.value);
-              handleCambiarEstado('estado_orden', e.target.value);
-            }}
+            onChange={(e) => handleCambiarEstado('estado_orden', e.target.value)}
             className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer ${getEstadoColor(solicitud.estado_orden)}`}
             disabled={loading}
           >
@@ -293,9 +247,6 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
           </select>
         ) : (
           <span className={`px-3 py-2 rounded-lg text-xs font-bold inline-block ${getEstadoColor(solicitud.estado_orden)}`}>
-            {solicitud.estado_orden === 'Pendiente' && '⏳ '}
-            {solicitud.estado_orden === 'Aprobada' && '✓ '}
-            {solicitud.estado_orden === 'Anulada' && '✕ '}
             {solicitud.estado_orden}
           </span>
         )}
@@ -303,25 +254,16 @@ const SolicitudRow = ({ solicitud, onUpdate }) => {
 
       <td className="px-4 py-4 text-sm text-gray-600">{solicitud.creado_por}</td>
       <td className="px-4 py-4 text-sm text-gray-500">{formatFecha(solicitud.fecha_creacion)}</td>
-      
+
       <td className="px-4 py-4 text-sm">
         <div className="flex gap-2">
           {solicitud.estado_orden === 'Aprobada' && (
-            <button
-              onClick={handleGenerarReporte}
-              className="px-3 py-2 bg-[#2D4373] text-white rounded-lg text-xs hover:bg-[#1e2d4f] font-semibold shadow-sm"
-              title="Generar Reporte"
-            >
+            <button onClick={handleGenerarReporte} className="px-3 py-2 bg-[#2D4373] text-white rounded-lg text-xs hover:bg-[#1e2d4f] font-semibold shadow-sm" title="Generar Reporte">
               📄 PDF
             </button>
           )}
           {puedeEliminar && (
-            <button
-              onClick={handleEliminar}
-              className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold shadow-sm"
-              disabled={loading}
-              title="Eliminar"
-            >
+            <button onClick={handleEliminar} className="px-3 py-2 bg-[#C4181E] text-white rounded-lg text-xs hover:bg-[#a01419] font-semibold shadow-sm" disabled={loading} title="Eliminar">
               🗑️
             </button>
           )}
